@@ -1,0 +1,11 @@
+/ICD_Bitstream_Data/*
+!/ICD_Bitstream_Data/01_raw/
+!/ICD_Bitstream_Data/scripts/
+/ICD_Bitstream_Data/01_raw/**/*.part
+/output/
+/tmp/
+/*.pdf
+/*.docx
+/*.txt
+__pycache__/
+.venv/

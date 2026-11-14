@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICD 比特流压缩实验台</title>
+<link rel="stylesheet" href="{{ url_for('static',filename='lab.css') }}">
+<script defer src="{{ url_for('static',filename='lab.js') }}"></script>
+</head>
+<body>
+<header><div><p>ICD 比特流压缩</p><h1>实验一 · 通用无损基线</h1></div><span>按原始记录长度</span></header>
+<nav aria-label="实验页面">
+<button data-page="config">实验配置</button><button data-page="live">实时测试</button>
+<button data-page="inspect">样本抽查</button><button data-page="results">实验结果</button><button data-page="history">实验记录</button>
+</nav>
+<main>
+<div class="runbar"><label for="run">当前实验</label><select id="run"><option value="">选择已创建的实验</option></select><span id="run-state"></span></div>
+<p id="notice" role="status"></p>
+<section id="config">
+<h2>实验配置</h2>
+<form id="setup">
+<fieldset><legend>数据来源</legend>{% for id,label in sources.items() %}<label class="choice"><input type="checkbox" name="sources" value="{{id}}" checked>{{label}}</label>{% endfor %}</fieldset>
+<fieldset><legend>压缩算法</legend>{% for id,label in algorithms.items() %}<label class="choice"><input type="checkbox" name="algorithms" value="{{id}}" checked>{{label}}</label>{% endfor %}</fieldset>
+<div class="fields">
+<label>测试模式<select name="mode"><option value="A">模式 A · 保留首部，只压缩载荷</option><option value="B">模式 B · 仅测试载荷</option></select></label>
+<label>每个来源的样本数<input name="count" type="number" min="1" max="10000" value="100" required></label>
+<label>随机种子<input name="seed" type="number" min="0" max="9007199254740991" value="20261114" required></label>
+<label>字典目标大小（字节）<input name="dict_size" type="number" min="256" max="65536" value="4096" required></label>
+</div>
+<p class="muted">按原始记录测试，不拼接或填充。模式 A 保留首部和原有校验，模式 B 仅取载荷。字典默认收发两端预置。</p>
+<div class="actions"><button class="primary" type="submit">启动实验</button>
+<button type="submit" id="batch-start">一键跑全部实验</button></div>
+<p class="muted">批量依次运行模式 A 和模式 B，覆盖 3 个来源与 4 种算法，共 24 个组合。</p>
+</form></section>
+<section id="live" hidden><h2>实时测试</h2>
+<div id="progress-cards" class="cards"></div><progress id="progress" value="0" max="1"></progress>
+<p id="progress-details"></p><p id="live-note" class="muted"></p>
+<div class="actions"><button id="pause">暂停</button><button id="resume">恢复</button><button id="inspect-current">查看当前／最近样本</button></div>
+<div id="current-sample"></div>
+</section>
+<section id="inspect" hidden><h2>样本抽查</h2>
+<form id="lookup" class="actions"><label>样本序号 <input id="sample-number" type="number" min="1" value="1" required></label><button class="primary">查询记录</button></form>
+<div id="sample-detail"></div></section>
+<section id="results" hidden><h2>实验结果</h2><div id="result-links" class="actions"></div>
+<details id="pdf-export"><summary>汇总实验并下载 PDF</summary>
+<div class="actions"><button id="pdf-all">导出全部实验</button><button id="pdf-selected">导出勾选实验</button></div>
+<div id="pdf-choices"></div></details><div id="result-detail"></div></section>
+<section id="history" hidden><h2>实验记录</h2><div id="history-list"></div><div id="history-detail"></div></section>
+</main>
+</body></html>

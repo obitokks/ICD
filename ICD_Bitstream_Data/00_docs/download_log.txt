@@ -1,0 +1,12 @@
+ROAD official file: https://zenodo.org/records/10462796/files/road.zip?download=1
+Alternate official endpoint: https://zenodo.org/api/records/10462796/files/road.zip/content
+Expected bytes: 556718276
+Expected MD5: cab184cfc2fe12c0834bc46188c0f330
+
+Car-Hacking official index: https://ocslab.hksecurity.net/Datasets/car-hacking-dataset/
+Official Dropbox host www.dropbox.com and direct content host dl.dropboxusercontent.com both timed out (curl 28). No archive or five-class data verified.
+
+DroneKit official GitHub archive verified by ZIP entry CRC. GitHub Contents API published Git object hashes were also checked for the extracted members.
+
+ROAD was fetched in HTTP 206 ranges from the official file URL and assembled. The final file matched the published MD5.
+ROAD signal translations: 17 same-name ambient/attack pairs, 17 byte-identical pairs. Paths were preserved.

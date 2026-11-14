@@ -1,0 +1,1 @@
+{"sources":["ROAD","MAVLink","DataFlash"],"algorithms":["zlib-1","zlib-6","zstd-1","zstd-dict"],"mode":"A","count":100,"seed":20261114,"dict_size":4096}
