@@ -1,5 +1,6 @@
 """Chinese experiment labels shared by the web interface and PDF."""
 FIELDS = {
+    'minimum_payload_bytes': '每块载荷最小长度',
     'mode': '测试模式', 'layout': '首部边界表传输方式', 'dictionary_plan': '字典部署',
     'sources': '数据来源', 'algorithms': '压缩算法', 'count': '每来源样本数',
     'seed': '随机种子', 'dict_size': '字典目标大小（字节）',
@@ -18,12 +19,17 @@ def describe(config):
     layout = LAYOUTS.get(config.get('layout'),'未记录') if config.get('mode') == 'A' else '不适用（纯载荷）'
     deployment = DEPLOYMENTS.get(config.get('dictionary_plan'),'未记录') if with_dict else '未使用字典'
     mode = MODES.get(config.get('mode'),'未记录')
+    if 'minimum_payload_bytes' in config:
+        mode = {'A':'模式 A（合并记录，保留首部和校验）',
+                'B':'模式 B（合并记录，仅压缩载荷）'}.get(config.get('mode'),mode)
     values = dict(config, mode=mode,layout=layout,dictionary_plan=deployment,
                   sources='、'.join(SOURCES.get(x,x) for x in config.get('sources',[])),
                   algorithms='、'.join(CODECS.get(x,x) for x in config.get('algorithms',[])))
     for key in ('layout','dictionary_delivery_bits'):
         if key not in config:
             values.pop(key,None)
+    if 'minimum_payload_bytes' in values:
+        values['minimum_payload_bytes'] = f'{config["minimum_payload_bytes"]*8} bit'
     if not with_dict:
         for key in ('dict_size','dictionary_delivery_bits'):
             if key in values:

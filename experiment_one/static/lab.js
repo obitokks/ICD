@@ -43,7 +43,7 @@ async function history() {
   for(const run of runs) {
     $('run').append(new Option(runLabel(run),run.id));
   }
-  active=before || runs[0]?.id || '';
+  active=runs.some(run=>run.id===before) ? before : runs[0]?.id || '';
   $('run').value=active;
   $('history-list').replaceChildren(...runs.map(run=>{
     const button=node('button');button.append(runCard(run));
@@ -173,6 +173,29 @@ function sampleIndex(run) {
   };
   return item;
 }
+function deleteButton(data) {
+  const button=node('button','删除此实验记录','danger');
+  button.disabled=['queued','running'].includes(data.status);
+  button.onclick=async()=>{
+    if(!window.confirm(`永久删除此实验的结果、样本及日志？\n${data.description.title}\n${data.id}`)) return;
+    button.disabled=true;
+    try{
+      await api('/'+data.id,{method:'DELETE'});
+      shown='';
+      $('sample-detail').replaceChildren();
+      $('history-detail').replaceChildren();
+      $('result-detail').replaceChildren();
+      delete $('result-detail').dataset.fingerprint;
+      $('result-links').replaceChildren();
+      text('run-state','');
+      await history();
+      await refresh();
+      text('notice','实验记录已删除');
+    }catch(error){report(error);}
+    finally{button.disabled=false;}
+  };
+  return button;
+}
 let refreshing=false;
 async function refresh() {
   if(!active || refreshing) return;
@@ -202,8 +225,8 @@ async function refresh() {
       const opened=new Set([...panel.querySelectorAll('details[open]')].map(item=>item.firstChild.textContent));
       const scroll=[...panel.querySelectorAll('.scroll')].map(item=>item.scrollLeft);
       panel.dataset.fingerprint=fingerprint;
-      const links=['csv','json','jsonl'].map(ext=>{
-        const a=node('a',ext.toUpperCase()+(ext==='jsonl'?' 逐样本导出':' 汇总导出'),'button');
+      const links=['csv','json','jsonl','lengths.csv'].map(ext=>{
+        const a=node('a',ext==='lengths.csv'?'数据源长度 CSV':ext.toUpperCase()+(ext==='jsonl'?' 逐样本导出':' 汇总导出'),'button');
         a.href='/api/runs/'+run+'/export/'+ext;return a;
       });
       $('result-links').replaceChildren(...links);
@@ -214,10 +237,15 @@ async function refresh() {
       if(!panel.children.length) opened.add('完整实验参数');
       panel.replaceChildren(node('h3',data.description.title),
         node('p',`${data.id} · ${data.created} → ${data.finished || '进行中'} · ${labels[data.status]} · ${data.completed}/${data.total}`),
-        parameters,table(data.summary,[
+        parameters,node('h3','各数据源平均原始长度'),
+        table(data.source_lengths,[
+          ['source','来源'],['samples','已测试样本数'],['average_original_bits','平均原始长度（bit）',number]
+        ]),node('h3','按数据源与算法统计'),
+        node('p','总压缩率是逐条计算「实际发送长度 ÷ 原始长度」后的算术平均。实际发送长度含模式标记及适用的首部、校验；大于 100% 表示平均膨胀。','muted'),
+        table(data.summary,[
         ['source','来源'],['algorithm','算法'],['samples','样本'],['success','成功'],['failures','失败'],
         ['average_original_bits','平均原始 bit'],['average_sent_bits','平均发送 bit',number],
-        ['average_ratio','平均压缩率',pct],['total_ratio','总长度比',pct],['average_saving','节省率',pct],
+        ['average_ratio','总压缩率',pct],['average_saving','节省率',pct],
         ['achieved','达标数量'],['hit_rate','达标率',pct],['correctness','正确率',pct],
         ['sha_mismatch','SHA 不一致样本'],['bit_errors','错误 bit'],
         ['encode_mean_us','编码均值 μs',number],['encode_p50_us','编码 P50',number],['encode_p95_us','编码 P95',number],
@@ -240,7 +268,7 @@ async function refresh() {
         node('h3',data.description.title),
         node('p',`${labels[data.status]} · ${data.created} → ${data.finished || '进行中'} · ${data.id}`),
         table(data.description.parameters,[['key','参数'],['value','设定']]),
-        sampleIndex(run),detail('运行日志',info.logs),detail('数据边界异常',data.audit),detail('字典版本与训练来源',info.dictionaries));
+        deleteButton(data),sampleIndex(run),detail('运行日志',info.logs),detail('数据边界异常',data.audit),detail('字典版本与训练来源',info.dictionaries));
     }
   }finally{refreshing=false;}
 }

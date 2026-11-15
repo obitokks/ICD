@@ -59,6 +59,11 @@ def create_app(db=None, root=ROOT):
     def status(run):
         return jsonify(lab.status(run,request.args.get('summary')=='1'))
 
+    @app.delete('/api/runs/<run>')
+    def delete(run):
+        lab.delete(run)
+        return jsonify(deleted=run)
+
     @app.post('/api/runs/<run>/resume')
     def resume(run):
         return jsonify(id=lab.start(run=run)),202
@@ -97,6 +102,12 @@ def create_app(db=None, root=ROOT):
                 writer = csv.DictWriter(output,fieldnames=fields)
                 writer.writeheader()
                 writer.writerows(rows)
+            response = Response('\ufeff'+output.getvalue(),mimetype='text/csv')
+        elif kind=='lengths.csv':
+            output = io.StringIO()
+            writer = csv.DictWriter(output,fieldnames=['source','samples','average_original_bits'])
+            writer.writeheader()
+            writer.writerows(data['source_lengths'])
             response = Response('\ufeff'+output.getvalue(),mimetype='text/csv')
         elif kind=='jsonl':
             with lab.connect() as conn:

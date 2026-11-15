@@ -27,7 +27,6 @@ def summarize(records, mode):
             average_ratio = mean(r['sent_bits']/r['original_bits'] for r in measured)
             item.update(average_sent_bits=transmitted/len(measured),
                         average_ratio=average_ratio,
-                        total_ratio=transmitted/sum(r['original_bits'] for r in measured),
                         average_saving=1-average_ratio)
         for phase in ('encode','decode'):
             values=sorted(r[f'{phase}_ns']/1000 for r in rows if r.get(f'{phase}_ns') is not None)
@@ -53,3 +52,14 @@ def summarize_headers(records):
                            hit_rate=sum(r['ok'] and r.get('sent_bits') is not None and 5*r['sent_bits']<=4*r['original_bits']
                                         for r in rows)/len(rows)))
     return result
+
+
+def summarize_source_lengths(records):
+    by_source = defaultdict(dict)
+    for row in records:
+        lengths = by_source[row['source']]
+        lengths[row['sample_id']] = row['original_bits']
+    return [
+        dict(source=source, samples=len(lengths), average_original_bits=mean(lengths.values()))
+        for source, lengths in sorted(by_source.items())
+    ]

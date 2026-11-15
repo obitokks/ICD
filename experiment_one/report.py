@@ -45,7 +45,7 @@ def make_report(entries):
         return f'{row[key]:.2%}' if row.get(key) is not None else '—'
 
     story.append(para('ICD 比特流压缩实验汇总',title))
-    story.append(para(f'共 {len(entries)} 次实验。按原始记录长度测试，发送长度不超过各样本原长的 80% 为达标。'))
+    story.append(para(f'共 {len(entries)} 次实验。逐块计算，发送长度不超过各样本原长的 80% 为达标。'))
     table([['实验 ID','模式','状态','已测试 / 计划']]+[
         [run['id'],run['config']['mode'],run['status'],f'{run["completed"]} / {run["total"]}']
         for run,_ in entries],[215,50,100,140])
@@ -55,12 +55,18 @@ def make_report(entries):
                       para(f'{run["created"]}  /  {run["finished"] or "进行中"}  /  {run["status"]}'),
                       para('实验参数',heading)])
         table([['参数','设定']]+[[row['key'],format_value(row['value'])] for row in run['description']['parameters']],[134,371])
+        story.append(para('各数据源平均原始长度',heading))
+        table([['来源','已测试样本数','平均原始长度（bit）']]+[
+            [r['source'],r['samples'],f'{r["average_original_bits"]:.2f}']
+            for r in run['source_lengths']
+        ],[165,135,205])
         story.append(para('按数据源与算法统计',heading))
+        story.append(para('总压缩率是逐条计算「实际发送长度 ÷ 原始长度」后的算术平均。实际发送长度含模式标记及适用的首部、校验。大于 100% 表示平均膨胀。'))
         rows = run['summary']
-        table([['来源','算法','样本 / 失败','平均发送 bit','平均比 / 总长比','达标率','正确率']]+[
+        table([['来源','算法','样本 / 失败','平均发送 bit','总压缩率','达标率','正确率']]+[
             [r['source'],r['algorithm'],f'{r["samples"]} / {r["failures"]}',
              f'{r["average_sent_bits"]:.2f}' if r.get('average_sent_bits') is not None else '—',
-             f'{percentage(r,"average_ratio")} / {percentage(r,"total_ratio")}',
+             percentage(r,'average_ratio'),
              percentage(r,'hit_rate'),percentage(r,'correctness')] for r in rows
         ],[60,65,65,75,104,65,71])
         story.append(para('编解码耗时',heading))

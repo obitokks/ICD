@@ -7,7 +7,7 @@
 <script defer src="{{ url_for('static',filename='lab.js') }}"></script>
 </head>
 <body>
-<header><div><p>ICD 比特流压缩</p><h1>实验一 · 通用无损基线</h1></div><span>按原始记录长度</span></header>
+<header><div><p>ICD 比特流压缩</p><h1>实验一 · 通用无损基线</h1></div><span>每块载荷超过 3000 bit</span></header>
 <nav aria-label="实验页面">
 <button data-page="config">实验配置</button><button data-page="live">实时测试</button>
 <button data-page="inspect">样本抽查</button><button data-page="results">实验结果</button><button data-page="history">实验记录</button>
@@ -26,7 +26,7 @@
 <label>随机种子<input name="seed" type="number" min="0" max="9007199254740991" value="20261114" required></label>
 <label>字典目标大小（字节）<input name="dict_size" type="number" min="256" max="65536" value="4096" required></label>
 </div>
-<p class="muted">按原始记录测试，不拼接或填充。模式 A 保留首部和原有校验，模式 B 仅取载荷。字典默认收发两端预置。</p>
+<p class="muted">同一文件内连续合并记录，直到载荷超过 3000 bit；每块一次压缩，不填充。每来源样本数按合并后的块计。模式 A 保留首部和原有校验，模式 B 仅取载荷。字典默认收发两端预置。</p>
 <div class="actions"><button class="primary" type="submit">启动实验</button>
 <button type="submit" id="batch-start">一键跑全部实验</button></div>
 <p class="muted">批量依次运行模式 A 和模式 B，覆盖 3 个来源与 4 种算法，共 24 个组合。</p>

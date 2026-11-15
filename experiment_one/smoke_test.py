@@ -67,7 +67,7 @@ def run():
                 assert state['completed']==1 and state['status']=='running',state
                 inspect = client.get(base+'/samples/1').json
                 assert len(inspect['results'])==1 and inspect['results'][0]['ok']
-                assert inspect['raw']['length']==96 and inspect['provenance']['header_bits']>0
+                assert inspect['raw']['length']==4512 and inspect['provenance']['header_bits']==1504
                 assert client.post(base+'/pause').status_code==202
             finally:
                 release.set()
@@ -94,7 +94,8 @@ def run():
         sample=client.get(path+'/samples/1').json
         assert sample['provenance']['header_bits']==0
         dictionary=next(r for r in sample['results'] if r['algorithm']=='zstd-dict')
-        assert dictionary['fallback'] and dictionary['sent_bits']==72
+        assert dictionary['payload_bits']==3008 and dictionary['ok']
+        assert len(sample['provenance']['records'])==47
     print('Isolated fixture passed: A/B, live inspection, pause/restart/resume, exported summaries, bit boundaries.')
 
 

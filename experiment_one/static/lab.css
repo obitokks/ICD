@@ -20,3 +20,4 @@ pre{font:13px/1.55 Consolas,monospace;background:#f3f6f8;padding:12px;border-rad
 .run-card{display:grid;gap:4px;min-width:0;overflow-wrap:anywhere}
 .run-card small{color:#526579}
 #pdf-choices label{margin:0;align-items:start;padding:8px;border-bottom:1px solid #dce5ea}
+.danger{color:#9d281e;border-color:#cf8c85}.danger:hover{background:#fff0ef}

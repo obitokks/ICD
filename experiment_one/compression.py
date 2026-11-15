@@ -90,7 +90,7 @@ def compress_sample(raw, header_bits, trailer_bits, encode, decode):
     recovered, decoded, error = b'', b'', ''
     decode_ns = None
     try:
-        # The transport supplies the frame extent and native header/trailer sizes.
+        # The benchmark supplies block extent and protected byte counts out of band.
         encoded = compressed if fallback else wire[1+start:len(wire)-len(trailer)]
         clock = time.perf_counter_ns()
         decoded = decode(encoded)

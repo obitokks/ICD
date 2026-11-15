@@ -18,8 +18,8 @@ import zstandard as zstd
 
 from compression import ALGORITHMS, codec, compress_sample, frame_overhead
 from presentation import describe
-from metrics import summarize, summarize_headers
-from samples import select
+from metrics import summarize, summarize_headers, summarize_source_lengths
+from samples import MIN_PAYLOAD_BYTES, select
 from source_data import ROOT, SOURCES
 from validation import verify
 
@@ -300,6 +300,7 @@ class Lab:
         data['latest'] = json.loads(latest[0]) if latest else None
         if include_summary:
             data['summary'] = summarize(rows,conf['mode'])
+            data['source_lengths'] = summarize_source_lengths(rows)
             data['header_summary'] = summarize_headers(rows) if conf['mode']=='A' else []
         return data
 
@@ -318,6 +319,22 @@ class Lab:
             data.update({key:show(r[key]) for key in ('compressed','restored','wire','decoded')})
             results.append(data)
         return dict(id=sample, raw=show(row['raw']), provenance=json.loads(row['meta']),results=results)
+
+    def delete(self, run):
+        with self.lock, self.connect() as conn:
+            row = conn.execute('SELECT status FROM runs WHERE id=?',(run,)).fetchone()
+            if row is None:
+                raise KeyError(run)
+            if row['status'] in ('queued','running') or (
+                self.active == run and self.worker and self.worker.is_alive()
+            ):
+                raise ValueError('实验仍在运行或等待执行，暂不能删除')
+            conn.execute('DELETE FROM results WHERE run=?',(run,))
+            conn.execute('DELETE FROM samples WHERE run=?',(run,))
+            conn.execute('DELETE FROM dictionaries WHERE run=?',(run,))
+            conn.execute('DELETE FROM logs WHERE run=?',(run,))
+            conn.execute('DELETE FROM batch_jobs WHERE run=?',(run,))
+            conn.execute('DELETE FROM runs WHERE id=?',(run,))
 
     def records(self, run):
         with self.connect() as conn:
@@ -340,6 +357,7 @@ def validate_config(conf):
     config.pop('layout',None)
     config.pop('dictionary_delivery_bits',None)
     config['dictionary_plan'] = 'preinstalled'
+    config['minimum_payload_bytes'] = MIN_PAYLOAD_BYTES
     for key, low, high in [('count',1,10000),('seed',0,2**53-1),('dict_size',256,65536)]:
         if type(config.get(key)) is not int or not low <= config[key] <= high:
             raise ValueError(f'Invalid {key}: {low}..{high}')
